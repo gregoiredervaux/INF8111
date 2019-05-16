@@ -1,6 +1,7 @@
 from CountBoW import CountBoW
 import math
-
+import numpy as np
+from scipy.sparse import csc_matrix
 
 class TFIDFBoW(CountBoW):
 
@@ -25,8 +26,8 @@ class TFIDFBoW(CountBoW):
         :return: a list of the idf by index
         """
 
-        idf = []
-        for i in range(len(bow_matrix[0])):
+        idf = csc_matrix([])
+        for i in range(len(self.tokens_index)):
             dfi = 0
             for j in range(len(bow_matrix)):
                 # on compte le nombre de documents qui contiennent ce mot
@@ -45,12 +46,9 @@ class TFIDFBoW(CountBoW):
 
         idf = self.get_idf(bow_matrix) if save_idf else self.idf
         if save_idf: self.idf = idf
-        #idf = self.get_idf(bow_matrix)
         for j in range(len(bow_matrix)):
-            for i in range(len(bow_matrix[0])):
-                tf = (bow_matrix[j][i] / len(bow_matrix[j]))
-                bow_matrix[j][i] = bow_matrix[j][i] * idf[i] * tf
-
+            for i in range(len(self.tokens_index)):
+                bow_matrix[j][i] = bow_matrix[j][i] * idf[i]
         return bow_matrix
 
     def fit_transform(self, X):
@@ -92,18 +90,19 @@ class TFIDFBoW(CountBoW):
 
         :return: a list of vectors
         """
-        fited_tweets = [[]]
+        fited_tweets = csc_matrix((len(X), len(self.tokens_index)), dtype=np.int8)
 
         try:
+            index = 0
             for x in X:
                 tokens = self.pipeline.preprocess(x)
                 tokens_list = self.get_tokens_list(tokens)
-                fited_tweets.append([0 for i in range(len(self.tokens_index))])
                 for token in tokens_list:
                     if token in self.tokens_index:
-                        fited_tweets[-1][self.tokens_index.index(token)] += 1
+                        fited_tweets[index][self.tokens_index.index(token)] += 1
+                index += 1
 
         except:
             raise NotImplementedError("")
 
-        return self.get_weighted_matrix(fited_tweets[1:])
+        return self.get_weighted_matrix(fited_tweets)

@@ -1,5 +1,4 @@
-import csv
-
+from scipy.sparse import csc_matrix
 
 def bigram(tokens):
     """
