@@ -1,9 +1,6 @@
 import json
 import re
 
-from TFIDFBoW import TFIDFBoW
-from PreProcessing import PreprocessingPipeline
-
 def extract_tweet_content(raw_tweet_file):
     """
     Extract the tweet content for each json object
@@ -12,16 +9,15 @@ def extract_tweet_content(raw_tweet_file):
 
     :return: a list with the tweet contents
     """
+    tweet_list = []
     try:
-        tweet_list = []
-        with open("e_corp_dataset.txt", "r") as reader:
+        with open(raw_tweet_file, "r") as reader:
             for line in reader:
-                json_line = json.load(line)
-                tweet_list.append(json_line)
-        return tweet_list
+                json_line = json.loads(line)
+                tweet_list.append(json_line["text"])
     except:
         raise NotImplementedError("")
-
+    return tweet_list
 
 def detect_airline(tweet_msg):
     """
@@ -31,39 +27,43 @@ def detect_airline(tweet_msg):
 
     :return: list of detected airline companies
     """
-    try:
-        compagnies = ["Air France",
-                      "American Airways",
-                      "British Airways",
-                      "Delta",
-                      "Southwest",
-                      "United",
-                      "Us Airways",
-                      "Virgin America"]
 
-        present_compagnies = []
-        for compagnie in compagnies:
-            if re.match(compagnie, tweet_msg):
-                present_compagnies.append(compagnie)
-        return present_compagnies
+    present_compagnies = []
+    try:
+        compagnies = "(Air ?France|" \
+                     "American ?Airways|" \
+                     "British ?Airways|" \
+                     "Delta|" \
+                     "Southwest|" \
+                     "United|" \
+                     "Us ?Airways|" \
+                     "Virgin ?America)"
+        if re.match(r'.+?' + compagnies, tweet_msg, re.IGNORECASE | re.DOTALL):
+            present_compagnies.append(tweet_msg)
 
     except:
         raise NotImplementedError("")
 
+    return present_compagnies
 
-def extract_sentiment(classifier, tweet):
-    """
-    Extract the tweet sentiment
+def save_airline_tweets():
 
-    classifier: classifier object
-    tweet: represents the tweet message. You should define the data type
+    try:
+        i = 0
+        j = 0
+        with open("e_corp_dataset.txt", "r") as reader:
+            for line in reader:
+                json_line = json.loads(line)
+                with open("saved_tweets.txt", "a") as writer:
 
-    :return: list of detected airline companies
-    """
-    pre_process_pipe = PreprocessingPipeline(True, True, True)
+                    if len(detect_airline(json_line["text"])) != 0:
+                        writer.write(line)
+                        print("\r{} tweets selectionnés sur {}".format(i, j), end="")
+                        i += 1
+                    j += 1
+    except:
+        raise NotImplementedError("")
 
-    bow_tweet
+if __name__ == "__main__":
+    save_airline_tweets()
 
-    bow_tweet = bow_obj.fit_transform([tweet])
-
-    raise NotImplementedError("")

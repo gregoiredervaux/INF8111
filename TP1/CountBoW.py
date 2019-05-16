@@ -1,4 +1,4 @@
-from scipy.sparse import csc_matrix
+from scipy.sparse import csr_matrix
 import numpy as np
 
 def bigram(tokens):
@@ -40,16 +40,9 @@ class CountBoW(object):
         self.tokens_index = []
 
     def get_tokens_list(self, tokens):
-        tokens_list = []
-        if self.bigram and self.trigram:
-            tokens_list = bigram(tokens) + trigram(tokens)
-        else:
-            if self.bigram:
-                tokens_list = bigram(tokens)
-            elif self.trigram:
-                self.tokens_list = tokens
-            else:
-                tokens_list = tokens
+        tokens_list = tokens
+        if self.bigram: tokens_list += bigram(tokens)
+        if self.trigram: tokens_list += trigram(tokens)
         return tokens_list
 
     def fit_transform(self, X):
@@ -69,18 +62,20 @@ class CountBoW(object):
                 if x != "Not Available":
                     tokens = self.pipeline.preprocess(x)
                     tokens_list = self.get_tokens_list(tokens)
-                    fited_tweets.append([0 for i in range(len(fited_tweets[0]))])
+                    new_fited_tweet = [0 for i in range(len(fited_tweets[0]))]
                     for token in tokens_list:
                         if token in self.tokens_index:
-                            fited_tweets[-1][self.tokens_index.index(token)] += 1
+                            new_fited_tweet[self.tokens_index.index(token)] += 1
                         else:
                             for fited_tweet in fited_tweets:
                                 fited_tweet.append(0)
-                            fited_tweets[-1][-1] += 1
+                            new_fited_tweet.append(1)
                             self.tokens_index.append(token)
+                    fited_tweets.append(new_fited_tweet)
         except:
             raise NotImplementedError("")
-        return csc_matrix(fited_tweets[1:])
+
+        return csr_matrix(fited_tweets[1:])
 
     def transform(self, X):
         """
@@ -91,7 +86,7 @@ class CountBoW(object):
 
         :return: a list of vectors
         """
-        fited_tweets = csc_matrix((len(X), len(self.tokens_index)), dtype=np.int8)
+        fited_tweets = csr_matrix((len(X), len(self.tokens_index)), dtype=np.int8)
         try:
             index = 0
             for x in X:
@@ -104,4 +99,4 @@ class CountBoW(object):
         except:
             raise NotImplementedError("")
 
-        return csc_matrix(fited_tweets)
+        return csr_matrix(fited_tweets)

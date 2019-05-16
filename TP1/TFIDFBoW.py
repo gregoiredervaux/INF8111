@@ -1,7 +1,7 @@
 from CountBoW import CountBoW
 import math
 import numpy as np
-from scipy.sparse import csc_matrix
+from scipy.sparse import csr_matrix
 
 class TFIDFBoW(CountBoW):
 
@@ -26,7 +26,7 @@ class TFIDFBoW(CountBoW):
         :return: a list of the idf by index
         """
 
-        idf = csc_matrix([])
+        idf = []
         for i in range(len(self.tokens_index)):
             dfi = 0
             for j in range(len(bow_matrix)):
@@ -46,7 +46,7 @@ class TFIDFBoW(CountBoW):
 
         idf = self.get_idf(bow_matrix) if save_idf else self.idf
         if save_idf: self.idf = idf
-        for j in range(len(bow_matrix)):
+        for j in range(bow_matrix.shape[0]):
             for i in range(len(self.tokens_index)):
                 bow_matrix[j][i] = bow_matrix[j][i] * idf[i]
         return bow_matrix
@@ -67,19 +67,20 @@ class TFIDFBoW(CountBoW):
                 if x != "Not Available":
                     tokens = self.pipeline.preprocess(x)
                     tokens_list = self.get_tokens_list(tokens)
-                    fited_tweets.append([0 for i in range(len(fited_tweets[0]))])
+                    new_fited_tweet = [0 for i in range(len(fited_tweets[0]))]
                     for token in tokens_list:
                         if token in self.tokens_index:
-                            fited_tweets[-1][self.tokens_index.index(token)] += 1
+                            new_fited_tweet[self.tokens_index.index(token)] += 1
                         else:
                             for fited_tweet in fited_tweets:
                                 fited_tweet.append(0)
-                            fited_tweets[-1][-1] += 1
+                            new_fited_tweet.append(1)
                             self.tokens_index.append(token)
+                    fited_tweets.append(new_fited_tweet)
         except:
             raise NotImplementedError("")
 
-        return csc_matrix(self.get_weighted_matrix(fited_tweets[1:], True))
+        return csr_matrix(self.get_weighted_matrix(fited_tweets[1:], True))
 
     def transform(self, X):
         """
@@ -90,7 +91,7 @@ class TFIDFBoW(CountBoW):
 
         :return: a list of vectors
         """
-        fited_tweets = csc_matrix((len(X), len(self.tokens_index)), dtype=np.int8)
+        fited_tweets = csr_matrix((len(X), len(self.tokens_index)), dtype=np.int8)
 
         try:
             index = 0
