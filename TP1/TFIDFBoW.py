@@ -79,7 +79,7 @@ class TFIDFBoW(CountBoW):
         except:
             raise NotImplementedError("")
 
-        return self.get_weighted_matrix(fited_tweets[1:], True)
+        return csc_matrix(self.get_weighted_matrix(fited_tweets[1:], True))
 
     def transform(self, X):
         """
@@ -99,7 +99,7 @@ class TFIDFBoW(CountBoW):
                 tokens_list = self.get_tokens_list(tokens)
                 for token in tokens_list:
                     if token in self.tokens_index:
-                        fited_tweets[index][self.tokens_index.index(token)] += 1
+                        fited_tweets[index, self.tokens_index.index(token)] += 1
                 index += 1
 
         except:

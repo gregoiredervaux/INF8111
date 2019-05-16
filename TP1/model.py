@@ -55,7 +55,7 @@ def train_evaluate(training_X, training_Y, validation_X, validation_Y, bowObj):
     training_rep = bowObj.fit_transform(training_X)
     fin_fit_trans = time.time() - debut_fit_trans
 
-    print("     taille dico: " + str(len(training_rep[0])) + " nb tweet: " + str(len(training_rep)))
+    print("     taille dico: " + str(training_rep[0].shape[0]) + " nb tweet: " + str(training_rep.shape[0]))
 
     debut_train = time.time()
     classifier.fit(training_rep, training_Y)
@@ -96,7 +96,7 @@ def custom_evaluate(training_X, training_Y, validation_X, validation_Y, options)
     training_rep = bow.fit_transform(training_X)
     fin_fit_trans = time.time() - debut_fit_trans
 
-    print("     taille dico: " + str(len(training_rep[0])) + " nb tweet: " + str(len(training_rep)))
+    print("     taille dico: " + str(training_rep[0].shape[0]) + " nb tweet: " + str(training_rep.shape[0]))
 
     debut_train = time.time()
     classifier.fit(training_rep, training_Y)

@@ -1,4 +1,5 @@
 from scipy.sparse import csc_matrix
+import numpy as np
 
 def bigram(tokens):
     """
@@ -79,7 +80,7 @@ class CountBoW(object):
                             self.tokens_index.append(token)
         except:
             raise NotImplementedError("")
-        return fited_tweets[1:]
+        return csc_matrix(fited_tweets[1:])
 
     def transform(self, X):
         """
@@ -90,16 +91,17 @@ class CountBoW(object):
 
         :return: a list of vectors
         """
-        fited_tweets = [[]]
+        fited_tweets = csc_matrix((len(X), len(self.tokens_index)), dtype=np.int8)
         try:
+            index = 0
             for x in X:
                 tokens = self.pipeline.preprocess(x)
                 tokens_list = self.get_tokens_list(tokens)
-                fited_tweets.append([0 for i in range(len(self.tokens_index))])
                 for token in tokens_list:
                     if token in self.tokens_index:
-                        fited_tweets[-1][self.tokens_index.index(token)] += 1
+                        fited_tweets[index, self.tokens_index.index(token)] += 1
+                index += 1
         except:
             raise NotImplementedError("")
 
-        return fited_tweets[1:]
+        return csc_matrix(fited_tweets)
