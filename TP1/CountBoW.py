@@ -1,4 +1,5 @@
 from scipy.sparse import csr_matrix
+from scipy.sparse import lil_matrix
 import numpy as np
 
 def bigram(tokens):
@@ -86,7 +87,7 @@ class CountBoW(object):
 
         :return: a list of vectors
         """
-        fited_tweets = csr_matrix((len(X), len(self.tokens_index)), dtype=np.int8)
+        fited_tweets = lil_matrix((len(X), len(self.tokens_index)), dtype=np.int8)
         try:
             index = 0
             for x in X:

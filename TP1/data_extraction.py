@@ -19,6 +19,7 @@ def extract_tweet_content(raw_tweet_file):
         raise NotImplementedError("")
     return tweet_list
 
+
 def detect_airline(tweet_msg):
     """
     Detect and return the airline companies mentioned in the tweet
@@ -30,16 +31,18 @@ def detect_airline(tweet_msg):
 
     present_compagnies = []
     try:
-        compagnies = "(Air ?France|" \
-                     "American ?Airways|" \
-                     "British ?Airways|" \
-                     "Delta|" \
-                     "Southwest|" \
-                     "United|" \
-                     "Us ?Airways|" \
-                     "Virgin ?America)"
-        if re.match(r'.+?' + compagnies, tweet_msg, re.IGNORECASE | re.DOTALL):
-            present_compagnies.append(tweet_msg)
+        compagnies = ["Air ?France",
+                      "American ?Airways",
+                      "British ?Airways",
+                      "Delta",
+                      "Southwest",
+                      "United",
+                      "Us ?Airways",
+                      "Virgin ?America"]
+
+        for compagnie in compagnies:
+            if re.search(compagnie, tweet_msg, re.IGNORECASE | re.DOTALL):
+                present_compagnies.append(re.search(compagnie, tweet_msg, re.IGNORECASE | re.DOTALL).group())
 
     except:
         raise NotImplementedError("")

@@ -2,6 +2,7 @@ from CountBoW import CountBoW
 import math
 import numpy as np
 from scipy.sparse import csr_matrix
+from scipy.sparse import lil_matrix
 
 class TFIDFBoW(CountBoW):
 
@@ -29,11 +30,11 @@ class TFIDFBoW(CountBoW):
         idf = []
         for i in range(len(self.tokens_index)):
             dfi = 0
-            for j in range(len(bow_matrix)):
+            for j in range(bow_matrix.shape[0]):
                 # on compte le nombre de documents qui contiennent ce mot
-                dfi += 1 if bow_matrix[j][i] != 0 else 0
+                dfi += 1 if bow_matrix[j, i] != 0 else 0
             # on calcul et ajoute le idf a la liste des idf
-            idf.append(math.log(len(bow_matrix) / dfi))
+            idf.append(math.log(bow_matrix.shape[0] / dfi))
         return idf
 
     def get_weighted_matrix(self, bow_matrix, save_idf = False):
@@ -48,7 +49,7 @@ class TFIDFBoW(CountBoW):
         if save_idf: self.idf = idf
         for j in range(bow_matrix.shape[0]):
             for i in range(len(self.tokens_index)):
-                bow_matrix[j][i] = bow_matrix[j][i] * idf[i]
+                bow_matrix[j, i] = bow_matrix[j, i] * idf[i]
         return bow_matrix
 
     def fit_transform(self, X):
@@ -80,7 +81,7 @@ class TFIDFBoW(CountBoW):
         except:
             raise NotImplementedError("")
 
-        return csr_matrix(self.get_weighted_matrix(fited_tweets[1:], True))
+        return csr_matrix(self.get_weighted_matrix(lil_matrix(fited_tweets[1:]), True))
 
     def transform(self, X):
         """
@@ -91,7 +92,7 @@ class TFIDFBoW(CountBoW):
 
         :return: a list of vectors
         """
-        fited_tweets = csr_matrix((len(X), len(self.tokens_index)), dtype=np.int8)
+        fited_tweets = lil_matrix((len(X), len(self.tokens_index)), dtype=np.int8)
 
         try:
             index = 0
@@ -106,4 +107,4 @@ class TFIDFBoW(CountBoW):
         except:
             raise NotImplementedError("")
 
-        return self.get_weighted_matrix(fited_tweets)
+        return lil_matrix(self.get_weighted_matrix(fited_tweets))

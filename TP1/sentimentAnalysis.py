@@ -43,6 +43,7 @@ if __name__ == "__main__":
         print("\nraw: " + str(raw_tweets[i]))
         print("sentiment: " + str(sentiment_vector[i]))
 
+    print(classifier.predict(bow_tweets[0]))
 
 
 

@@ -24,12 +24,12 @@ def load_dataset(path):
         if text != "Not Available":
             x.append(text)
 
-        if label == "negative":
-            y.append(0)
-        elif label == "neutral":
-            y.append(1)
-        elif label == "positive":
-            y.append(2)
+            if label == "negative":
+                y.append(0)
+            elif label == "neutral":
+                y.append(1)
+            elif label == "positive":
+                y.append(2)
 
     assert len(x) == len(y)
 
@@ -134,8 +134,6 @@ if __name__ == "__main__":
     training_X, training_Y = load_dataset(trainingPath)
     validation_X, validation_Y = load_dataset(validationPath)
     pre_process_pipe = PreprocessingPipeline(True, True, True)
-
-    bow = CountBoW(pre_process_pipe, False, False)
 
     test_model([
         {
