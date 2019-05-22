@@ -60,9 +60,31 @@ def get_OH_pressure(pressure):
                 break
     return pressure_one_hot
 
+def get_OH_region(station_code, geo_region_obj):
+    for station in geo_region_obj.stations:
+        if station_code == station["id"]:
+            return [1 if station["quartier"]["id"] == index else 0 for index in range(len(geo_region_obj.region_ls))]
+
 
 data = np.array(())
 
+def count_total_line(filename):
+
+    def _make_gen(reader):
+        b = reader(1024 * 1024)
+        while b:
+            yield b
+            b = reader(1024 * 1024)
+
+    f = open(filename, 'rb')
+    f_gen = _make_gen(f.raw.read)
+    return sum(buf.count(b'\n') for buf in f_gen)
+
+def normalize(valeur, moy, ecart_type):
+    return valeur
+
+nb_lines = count_total_line("training.csv")
+print("nb_line: " + str(nb_lines))
 with open("training.csv", "r") as trainig_file:
     csv_reader = csv.reader(trainig_file)
     headers = next(csv_reader)
@@ -71,3 +93,10 @@ with open("training.csv", "r") as trainig_file:
         date_OH = get_OH_date(date)
         hour_OH = get_OH_hour(hour)
         wind_dir_OH = row[index["wind_dir"]]
+        region_OH = get_OH_region(row[index["station_code"]], geo_region)
+        ratio = float(csv_reader.line_num) / float(nb_lines)
+
+        len_compt = 30
+        print("\r [{}]{}% {} on {}".format("=" * (int(len_compt * ratio) - 1) + ">" + "-" * int(len_compt * (1-ratio)),
+                                           int(ratio * 100),
+                                           csv_reader.line_num, nb_lines), end="")

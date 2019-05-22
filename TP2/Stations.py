@@ -7,7 +7,8 @@ import random
 
 class Stations:
 
-    def __init__(self, quartier_json_path=None, stations_json_path=None):
+    def __init__(self, quartier_json_path="./quartierssociologiques2014.json",
+                 stations_json_path="./station_information.json"):
 
         self.region_ls = []
         self.stations = []
@@ -102,7 +103,6 @@ class Stations:
         plt.scatter(x, y, c='red', marker=".")
         plt.autoscale()
         plt.show()
-
 
 
 if __name__ == "__main__":
