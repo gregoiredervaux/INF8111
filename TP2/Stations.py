@@ -56,7 +56,7 @@ class Stations:
 
         plt.scatter(station_out[0], station_out[1], c='red', marker=".")
         plt.autoscale()
-        plt.show()
+        #plt.show()
 
 
         with open("./stations.json", "w") as json_file:
