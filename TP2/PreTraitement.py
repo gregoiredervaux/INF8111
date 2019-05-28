@@ -18,7 +18,7 @@ class PreTraitement:
             "wind_dir": 4,
             "wind_speed": 5,
             "visibility": 6,
-            "visib_indic": 7,
+            "visility_indicator": 7,
             "pressure": 8,
             "hmdx": 9,
             "wind_chill": 10,
@@ -29,15 +29,25 @@ class PreTraitement:
             "volume": 15
         }
 
-        self.geo_region = Stations("quartierssociologiques2014.json")
         if os.path.isfile("data_" + filepath + ".json") and save==False:
-            with open("data_" + filepath + ".json", "r") as json_file:
-                self.data = json.load(json_file)
+            self.data_matrix = np.loadtxt("data_" + filepath + ".csv", delimiter=",")
+
         else:
-            self.data = []
+            self.geo_region = Stations("quartierssociologiques2014.json")
             self.load_data(filepath)
+            print("sauvegarde du json")
             with open("data_" + filepath + ".json", "w") as json_file:
                  json.dump(self.data, json_file)
+
+            print("sauvegarde du csv")
+            self.data_matrix = np.column_stack([np.array(column) for i, column in self.data.items()])
+
+            self.header = []
+            for category in self.data:
+                for i in range(len(self.data[category][0])):
+                    self.header.append(category + str(i if len(self.data[category][0]) != 1 else ''))
+
+            np.savetxt("data_" + filepath + ".csv", self.data_matrix, header=str(self.header), delimiter=",", fmt='%.3e')
 
 
     def get_OH_date(self, date):
@@ -59,7 +69,10 @@ class PreTraitement:
         return hour_one_hot
 
     def get_OH_wind_dir(self, wind_dir):
-        index = int(wind_dir//4.5)
+        try:
+            index = int(float(wind_dir)//4.5)
+        except:
+            index = -1
         return [1 if i == index else 0 for i in range(8)]
 
     def get_OH_pressure(self, pressure):
@@ -93,18 +106,27 @@ class PreTraitement:
                 yield b
                 b = reader(1024 * 1024)
 
-        f = open(filename, 'rb')
+        f = open(filename + ".csv", 'rb')
         f_gen = _make_gen(f.raw.read)
         return sum(buf.count(b'\n') for buf in f_gen)
 
-    def normalize(self, array):
-        return array
+    def fill_zero_by_median(self, column):
+        column_full = []
+        for value in column:
+            if value != '':
+                column_full.append(float(value))
+
+        median = np.median(column_full)
+        for i, value in enumerate(column):
+            if value == '':
+                column[i] = str(median)
+        return column
 
     def load_data(self, filepath):
 
         nb_lines = self.count_total_line(filepath)
 
-        with open(filepath, "r") as trainig_file:
+        with open(filepath + ".csv", "r") as trainig_file:
             csv_reader = csv.reader(trainig_file)
             headers = next(csv_reader)
             weather_list = []
@@ -114,34 +136,30 @@ class PreTraitement:
                 "hour_OH": [],
                 "wind_dir_OH": [],
                 "region_OH": [],
-                # median
                 "temp": [],
-                # median
                 "drew_pt": [],
-                # median
                 "relat_hum": [],
-                # median
                 "wind_speed": [],
                 "visibility": [],
-                "visib_indic": [],
                 "hmdx": [],
-                "wind_chill": [],
                 "weather": [],
                 "public_holy": [],
                 "withdrawals": [],
                 "volume": []
             }
 
-            column_to_add_auto = ["temp", "drew_pt", "relat_hum", "relat_hum", "wind_speed", "visibility",
-                                  "visib_indic", "hmdx", "wind_chill", "public_holy", "withdrawals", "volume"]
+            column_to_add_auto = ["temp", "drew_pt", "relat_hum", "wind_speed", "visibility",
+                                  "hmdx", "public_holy", "withdrawals", "volume"]
 
+
+            # extraction des data du document et construction des OH vectors
             for row in csv_reader:
 
                 date, hour = row[self.index["date"]].split(' ')
 
                 self.data["date_OH"].append(self.get_OH_date(date))
                 self.data["hour_OH"].append(self.get_OH_hour(hour))
-                self.data["wind_dir_OH"].append(row[self.index["wind_dir"]])
+                self.data["wind_dir_OH"].append(self.get_OH_wind_dir(row[self.index["wind_dir"]]))
                 self.data["region_OH"].append(self.get_OH_region(row[self.index["station_code"]], self.geo_region))
                 self.data["weather"].append(row[self.index["weather"]].split(","))
                 for weather_name in row[self.index["weather"]].split(","):
@@ -156,15 +174,19 @@ class PreTraitement:
                 print("\r data generation [{}]{}%".format("=" * (int(len_compt * ratio) - 1) + ">" + "-" * int(len_compt * (1-ratio)),
                                                    int(ratio * 100)), end="")
 
-                if csv_reader.line_num > nb_lines/50:
-                    break
+                if csv_reader.line_num > nb_lines/100: break
 
-            column_to_normalize = ["temp", "drew_pt", "relat_hum", "relat_hum", "wind_speed",
-                                        "visibility", "visib_indic", "hmdx", "wind_chill", "withdrawals"]
+            # remplissages des valeures manquantes avant normalisation
+            column_to_normalize = ["temp", "drew_pt", "relat_hum", "wind_speed",
+                                        "visibility", "hmdx", "withdrawals"]
+
+            print("")
             for i, column in enumerate(column_to_normalize):
-                print("\ncolumn: " + str(column))
-                print("test array: " + str(np.array(self.data[column])[:10]))
-                self.data[column] = normalize(np.array(self.data[column]))
+
+                self.data[column] = self.fill_zero_by_median(self.data[column])
+                normalised_column = normalize([self.data[column]]).tolist()[0]
+                self.data[column] = [[result] for result in normalised_column]
+
 
                 nb_column = len(column_to_normalize)
                 ratio = float(i) / float(nb_column)
@@ -173,10 +195,13 @@ class PreTraitement:
                     "=" * (int(len_compt * ratio) - 1) + ">" + "-" * int(len_compt * (1 - ratio)),
                     int(ratio * 100)), end="")
 
-            self.data["weather"] = [self.get_OH_weather(weathers) for weathers in self.data["weather"]]
+            self.data["weather"] = [self.get_OH_weather(weather_list, weathers) for weathers in self.data["weather"]]
 
-            print("end of pre_traitement")
+            self.data["public_holy"] = [[int(value)] for value in self.data["public_holy"]]
+            self.data["volume"] = [[int(value)] for value in self.data["volume"]]
+
+            print("\nend of pre_traitement")
 
 
 if __name__ == "__main__":
-    data = PreTraitement("training.csv", True)
+    data = PreTraitement("training", False)
